@@ -13,3 +13,7 @@ dev_dependencies:
 dependencies:
   dio: ^4.0.0
   dio_cookie_manager: ^2.0.0
+  tuple: ^2.0.0
+
+assets:
+  - "assets/test.json"
