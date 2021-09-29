@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 
 import 'callback.dart';
+import 'endpoints/player_endpoint.dart';
 import 'enums.dart';
 import 'helpers.dart';
 import 'models/serializable.dart';
@@ -27,6 +28,8 @@ class ValorantClient {
   String get userPuuid => _rsoHandler._userPuuid;
   Region get userRegion => _userDetails.region;
 
+  PlayerEndpoint get playerEndpoint => PlayerEndpoint(this);
+
   ValorantClient(this._userDetails, {this.callback = const Callback()}) {
     _client = Dio();
     _cookieJar = CookieJar();
@@ -34,6 +37,9 @@ class ValorantClient {
     _rsoHandler = RSOHandler(_client, _userDetails);
   }
 
+  /// Initializes the client by authorizing the user with the constructor supplied [UserDetails]
+  ///
+  /// Must be called on every instance of [ValorantClient] to send authorized requests from the instance.
   Future<bool> init() async {
     if (_rsoHandler._isLoggedIn) {
       return true;
@@ -47,6 +53,9 @@ class ValorantClient {
     return _isInitialized = true;
   }
 
+  /// Executes a raw request with authentication to the specified [Uri] with specified [HttpMethod] and with the specified body (if any)
+  ///
+  /// returns a [Map] of response data if the request is a success.
   Future<Map<String, dynamic>?> executeRawRequest({required HttpMethod method, required Uri uri, dynamic body}) async {
     if (!_isInitialized) {
       callback.invokeErrorCallback('Client is not initialized yet. Try calling init()');
@@ -71,6 +80,9 @@ class ValorantClient {
     }
   }
 
+  /// Executes a generic request with authentication to the specified [Uri] with specified [HttpMethod] and with the specified body (if any)
+  ///
+  /// returns response data as [T] type which is specified as a generic type parameter to the function.
   Future<T?> executeGenericRequest<T extends ISerializable<T>>({required HttpMethod method, required Uri uri, dynamic body}) async {
     if (!_isInitialized) {
       callback.invokeErrorCallback('Client is not initialized yet. Try calling init()');

@@ -32,9 +32,9 @@ class PlayerEndpoint {
     }
 
     return Balance(
-      valorantPoints: response[CurrencyConstants.valorantPointsId] as int,
-      radianitePoints: response[CurrencyConstants.radianitePointsId] as int,
-      unknowCurrency: response[CurrencyConstants.unknownCurrency] as int,
+      valorantPoints: (response[CurrencyConstants.valorantPointsId] ?? 0) as int,
+      radianitePoints: (response[CurrencyConstants.radianitePointsId] ?? 0) as int,
+      unknowCurrency: (response[CurrencyConstants.unknownCurrency] ?? 0) as int,
     );
   }
 
