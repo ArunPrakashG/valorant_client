@@ -1,11 +1,4 @@
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:dio/dio.dart';
-import 'package:tuple/tuple.dart';
-
-import '../url_manager.dart';
-import '../user_details.dart';
+part of '../valorant_client_base.dart';
 
 class RSOHandler {
   final Dio _client;
@@ -16,17 +9,19 @@ class RSOHandler {
   int _accessTokenExpiryInHours = 1;
   String _userPuuid = '';
 
+  bool get _isLoggedIn => !isNullOrEmpty(_userPuuid);
+
   RSOHandler(this._client, this.userDetails);
 
-  Future<Tuple3<bool, String, Map<String, dynamic>>> initRSO() async {
+  Future<bool> initRSO() async {
     if (await _fetchClientCountry() && await _fetchAccessToken() && await _fetchEntitlements() && await _fetchClientVersion() && await _fetchUserInfo()) {
       _authHeaders['X-Riot-ClientPlatform'] =
           'ew0KCSJwbGF0Zm9ybVR5cGUiOiAiUEMiLA0KCSJwbGF0Zm9ybU9TIjogIldpbmRvd3MiLA0KCSJwbGF0Zm9ybU9TVmVyc2lvbiI6ICIxMC4wLjE5MDQyLjEuMjU2LjY0Yml0IiwNCgkicGxhdGZvcm1DaGlwc2V0IjogIlVua25vd24iDQp9';
       _client.options.headers.addAll(_authHeaders);
-      return Tuple3(true, _userPuuid, _authHeaders);
+      return true;
     }
 
-    return Tuple3(false, _userPuuid, _authHeaders);
+    return false;
   }
 
   Future<bool> _fetchClientCountry() async {
