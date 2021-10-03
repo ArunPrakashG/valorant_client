@@ -43,7 +43,7 @@ void main() async {
 
   if (storefront != null && storefront.skinsPanelLayout != null) {
     for (var item in storefront.skinsPanelLayout!.singleItemOffers) {
-      print('${item.parseAsRiotAssetId(assets.skins)}');
+      print('${item.parseAsRiotAssetId(assets.storefrontItems)}');
     }
   }
 }

@@ -1,5 +1,6 @@
 import 'helpers.dart';
 import 'models/asset_id.dart';
+import 'models/event.dart';
 import 'models/id_collection.dart';
 import 'models/user.dart';
 
@@ -20,6 +21,8 @@ extension IdCollectionExtension on IdCollection {
   Id getPlayerCardById(String id) => playerCards.singleWhere((element) => !isNullOrEmpty(element.id) && element.id! == id);
   Id getPlayerTitleById(String id) => playerTitles.singleWhere((element) => !isNullOrEmpty(element.id) && element.id! == id);
   Id getStorefrontItemById(String id) => storefrontItems.singleWhere((element) => !isNullOrEmpty(element.id) && element.id! == id);
+  Event getSeasonById(String id) => seasons.singleWhere((element) => !isNullOrEmpty(element.id) && element.id! == id);
+  Event getEventById(String id) => events.singleWhere((element) => !isNullOrEmpty(element.id) && element.id! == id);
 }
 
 extension StringExtension on String {
