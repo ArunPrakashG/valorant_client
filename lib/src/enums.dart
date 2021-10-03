@@ -17,7 +17,3 @@ enum CurrencyType {
   radianitePoints,
   unknown,
 }
-
-extension EnumExtensions on Enum {
-  String get humanized => toString().split('.').last;
-}

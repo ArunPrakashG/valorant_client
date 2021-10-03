@@ -10,6 +10,7 @@ import 'callback.dart';
 import 'endpoints/id_endpoint.dart';
 import 'endpoints/player_endpoint.dart';
 import 'enums.dart';
+import 'extensions.dart';
 import 'helpers.dart';
 import 'models/serializable.dart';
 import 'url_manager.dart';

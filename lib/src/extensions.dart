@@ -32,3 +32,7 @@ extension StringExtension on String {
 extension UserExtension on User {
   String get renderedDisplayName => '$gameName#$tagLine';
 }
+
+extension EnumExtensions on Enum {
+  String get humanized => toString().split('.').last;
+}

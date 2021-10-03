@@ -1,4 +1,5 @@
 import 'enums.dart';
+import 'extensions.dart';
 
 class UrlManager {
   static const String authUrl = 'https://auth.riotgames.com/api/v1/authorization';

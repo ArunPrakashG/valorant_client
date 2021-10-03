@@ -1,10 +1,11 @@
 name: valorant_client
-description: A starting point for Dart libraries or applications.
-version: 1.0.0
+description: Library to interact with Riot's Valorant Game API.
+version: 1.1.0
 homepage: https://github.com/ArunPrakashG/valorant_client
+repository: https://github.com/ArunPrakashG/valorant_client
 
 environment:
-  sdk: ">=2.14.2 <3.0.0"
+  sdk: ">=2.12.0 <3.0.0"
 
 dev_dependencies:
   lints: ^1.0.0
