@@ -10,3 +10,7 @@
 - Authentication fixes
   - Now you can access authentication headers once the initial authentication is completed
 - Extensions to make it easier to search assets in assets collection received from asset id endpoint
+
+## 1.1.1
+
+- Documentation updated
