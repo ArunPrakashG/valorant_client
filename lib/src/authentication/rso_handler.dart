@@ -113,7 +113,7 @@ class RSOHandler {
     }
 
     _userPuuid = response.data['sub'];
-    return true;
+    return !isNullOrEmpty(_userPuuid);
   }
 
   Future<bool> _fetchClientVersion() async {

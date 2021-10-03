@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 
 import 'callback.dart';
+import 'endpoints/id_endpoint.dart';
 import 'endpoints/player_endpoint.dart';
 import 'enums.dart';
 import 'helpers.dart';
@@ -27,8 +28,17 @@ class ValorantClient {
 
   String get userPuuid => _rsoHandler._userPuuid;
   Region get userRegion => _userDetails.region;
+  bool get isInitialized => _isInitialized;
 
-  PlayerEndpoint get playerEndpoint => PlayerEndpoint(this);
+  /// Gets the headers which helps to authorize a request to RIOT Valorant API.
+  ///
+  /// Use this to send custom requests with authorization.
+  ///
+  /// You will get Empty Map if [isInitialized] is false or authorization failed internally.
+  Map<String, dynamic> get getAuthorizationHeaders => _rsoHandler._authHeaders;
+
+  late PlayerEndpoint playerEndpoint = PlayerEndpoint(this);
+  late IdEndpoint idEndpoint = IdEndpoint(this);
 
   ValorantClient(this._userDetails, {this.callback = const Callback()}) {
     _client = Dio();
@@ -63,17 +73,34 @@ class ValorantClient {
     }
 
     try {
-      final response = await _client.requestUri(
-        uri,
-        data: body,
-        options: Options(contentType: ContentType.json.value, method: method.humanized.toUpperCase()),
-      );
+      Response<dynamic> response;
+
+      if (body == null) {
+        response = await _client.requestUri(
+          uri,
+          options: Options(
+            contentType: ContentType.json.value,
+            responseType: ResponseType.json,
+            method: method.humanized.toUpperCase(),
+          ),
+        );
+      } else {
+        response = await _client.requestUri(
+          uri,
+          data: body,
+          options: Options(
+            contentType: ContentType.json.value,
+            responseType: ResponseType.json,
+            method: method.humanized.toUpperCase(),
+          ),
+        );
+      }
 
       if (response.statusCode != 200) {
         return null;
       }
 
-      return response.data;
+      return response.data is String ? jsonDecode(response.data) : response.data;
     } on DioError catch (e) {
       callback.invokeRequestErrorCallback(e);
       return null;
@@ -83,24 +110,41 @@ class ValorantClient {
   /// Executes a generic request with authentication to the specified [Uri] with specified [HttpMethod] and with the specified body (if any)
   ///
   /// returns response data as [T] type which is specified as a generic type parameter to the function.
-  Future<T?> executeGenericRequest<T extends ISerializable<T>>({required HttpMethod method, required Uri uri, dynamic body}) async {
+  Future<T?> executeGenericRequest<T extends ISerializable<T>>({required T typeResolver, required HttpMethod method, required Uri uri, dynamic body}) async {
     if (!_isInitialized) {
       callback.invokeErrorCallback('Client is not initialized yet. Try calling init()');
       return null;
     }
 
     try {
-      final response = await _client.requestUri<T>(
-        uri,
-        data: body,
-        options: Options(contentType: ContentType.json.value, method: method.humanized.toUpperCase()),
-      );
+      Response<dynamic> response;
+
+      if (body == null) {
+        response = await _client.requestUri(
+          uri,
+          options: Options(
+            contentType: ContentType.json.value,
+            responseType: ResponseType.json,
+            method: method.humanized.toUpperCase(),
+          ),
+        );
+      } else {
+        response = await _client.requestUri(
+          uri,
+          data: body,
+          options: Options(
+            contentType: ContentType.json.value,
+            responseType: ResponseType.json,
+            method: method.humanized.toUpperCase(),
+          ),
+        );
+      }
 
       if (response.statusCode != 200) {
         return null;
       }
 
-      return response.data;
+      return typeResolver.fromJson(response.data is String ? jsonDecode(response.data) : response.data);
     } on DioError catch (e) {
       callback.invokeRequestErrorCallback(e);
       return null;

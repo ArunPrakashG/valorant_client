@@ -1,7 +1,7 @@
 name: valorant_client
 description: A starting point for Dart libraries or applications.
 version: 1.0.0
-# homepage: https://www.example.com
+homepage: https://github.com/ArunPrakashG/valorant_client
 
 environment:
   sdk: ">=2.14.2 <3.0.0"
@@ -13,7 +13,6 @@ dev_dependencies:
 dependencies:
   dio: ^4.0.0
   dio_cookie_manager: ^2.0.0
-  tuple: ^2.0.0
 
 assets:
   - "assets/test.json"

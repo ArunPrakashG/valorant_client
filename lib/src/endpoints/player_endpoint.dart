@@ -14,11 +14,17 @@ class PlayerEndpoint {
 
   Future<User?> getPlayer() async {
     final requestUri = Uri.parse('${UrlManager.getBaseUrlForRegion(_client.userRegion)}/name-service/v2/players');
-    return _client.executeGenericRequest<User>(
+    final response = await _client.executeRawRequest(
       method: HttpMethod.put,
       uri: requestUri,
       body: '["${_client.userPuuid}"]',
     );
+
+    if (response == null) {
+      return null;
+    }
+
+    return (response as Iterable<dynamic>).map((e) => User.fromMap(e)).first;
   }
 
   Future<Balance?> getBalance() async {
@@ -33,15 +39,16 @@ class PlayerEndpoint {
     }
 
     return Balance(
-      valorantPoints: (response[CurrencyConstants.valorantPointsId] ?? 0) as int,
-      radianitePoints: (response[CurrencyConstants.radianitePointsId] ?? 0) as int,
-      unknowCurrency: (response[CurrencyConstants.unknownCurrency] ?? 0) as int,
+      valorantPoints: (response['Balances'][CurrencyConstants.valorantPointsId] ?? 0) as int,
+      radianitePoints: (response['Balances'][CurrencyConstants.radianitePointsId] ?? 0) as int,
+      unknowCurrency: (response['Balances'][CurrencyConstants.unknownCurrency] ?? 0) as int,
     );
   }
 
   Future<MMR?> getMMR() async {
     final requestUri = Uri.parse('${UrlManager.getBaseUrlForRegion(_client.userRegion)}/mmr/v1/players/${_client.userPuuid}/competitiveupdates');
     final response = await _client.executeGenericRequest<MMR>(
+      typeResolver: MMR(),
       method: HttpMethod.get,
       uri: requestUri,
     );
@@ -53,17 +60,13 @@ class PlayerEndpoint {
     return response;
   }
 
-  Future<dynamic> getStorefront() async {
+  Future<Storefront?> getStorefront() async {
     final requestUri = Uri.parse('${UrlManager.getBaseUrlForRegion(_client.userRegion)}/store/v2/storefront/${_client.userPuuid}');
-    final response = await _client.executeGenericRequest<Storefront>(
+
+    return await _client.executeGenericRequest<Storefront>(
+      typeResolver: Storefront(),
       method: HttpMethod.get,
       uri: requestUri,
     );
-
-    if (response == null) {
-      return null;
-    }
-
-    return response;
   }
 }

@@ -22,18 +22,18 @@ class User implements ISerializable<User> {
 
   @override
   Map<String, dynamic> toJson() => {
-        'displayName': displayName,
-        'subject': subject,
-        'gameName': gameName,
-        'tagLine': tagLine,
+        'DisplayName': displayName,
+        'Subject': subject,
+        'GameName': gameName,
+        'TagLine': tagLine,
       };
 
   factory User.fromMap(Map<String, dynamic> map) {
     return User(
-      displayName: map['displayName'],
-      subject: map['subject'],
-      gameName: map['gameName'],
-      tagLine: map['tagLine'],
+      displayName: map['DisplayName'],
+      subject: map['Subject'],
+      gameName: map['GameName'],
+      tagLine: map['TagLine'],
     );
   }
 

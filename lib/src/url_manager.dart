@@ -7,4 +7,6 @@ class UrlManager {
   static const String versionUrl = 'https://valorant-api.com/v1/version';
 
   static String getBaseUrlForRegion(Region region) => 'https://pd.${region.humanized}.a.pvp.net';
+
+  static String getContentBaseUrlForRegion(Region region) => 'https://shared.${region.humanized}.a.pvp.net';
 }

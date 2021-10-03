@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'asset_id.dart';
+import 'event.dart';
 import 'serializable.dart';
 
 class IdCollection extends ISerializable<IdCollection> {
@@ -20,6 +21,8 @@ class IdCollection extends ISerializable<IdCollection> {
   final List<Id> playerCards;
   final List<Id> playerTitles;
   final List<Id> storefrontItems;
+  final List<Event> seasons;
+  final List<Event> events;
 
   IdCollection({
     this.characters = const [],
@@ -38,6 +41,8 @@ class IdCollection extends ISerializable<IdCollection> {
     this.playerCards = const [],
     this.playerTitles = const [],
     this.storefrontItems = const [],
+    this.seasons = const [],
+    this.events = const [],
   });
 
   factory IdCollection.fromJson(String source) => IdCollection.fromMap(json.decode(source));
@@ -60,27 +65,31 @@ class IdCollection extends ISerializable<IdCollection> {
       playerCards: List<Id>.from(map['PlayerCards'].map((x) => Id.fromMap(x)), growable: false),
       playerTitles: List<Id>.from(map['PlayerTitles'].map((x) => Id.fromMap(x)), growable: false),
       storefrontItems: List<Id>.from(map['StorefrontItems'].map((x) => Id.fromMap(x)), growable: false),
+      seasons: List<Event>.from(map['Seasons'].map((x) => Event.fromMap(x)), growable: false),
+      events: List<Event>.from(map['Events'].map((x) => Event.fromMap(x)), growable: false),
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'characters': characters.map((x) => x.toMap()).toList(),
-      'maps': maps.map((x) => x.toMap()).toList(),
-      'chromas': chromas.map((x) => x.toMap()).toList(),
-      'skins': skins.map((x) => x.toMap()).toList(),
-      'skinLevels': skinLevels.map((x) => x.toMap()).toList(),
-      'attachments': attachments.map((x) => x.toMap()).toList(),
-      'equips': equips.map((x) => x.toMap()).toList(),
-      'themes': themes.map((x) => x.toMap()).toList(),
-      'gameModes': gameModes.map((x) => x.toMap()).toList(),
-      'sprays': sprays.map((x) => x.toMap()).toList(),
-      'sprayLevels': sprayLevels.map((x) => x.toMap()).toList(),
-      'charms': charms.map((x) => x.toMap()).toList(),
-      'charmLevels': charmLevels.map((x) => x.toMap()).toList(),
-      'playerCards': playerCards.map((x) => x.toMap()).toList(),
-      'playerTitles': playerTitles.map((x) => x.toMap()).toList(),
-      'storefrontItems': storefrontItems.map((x) => x.toMap()).toList(),
+      'Characters': characters.map((x) => x.toMap()).toList(),
+      'Maps': maps.map((x) => x.toMap()).toList(),
+      'Chromas': chromas.map((x) => x.toMap()).toList(),
+      'Skins': skins.map((x) => x.toMap()).toList(),
+      'SkinLevels': skinLevels.map((x) => x.toMap()).toList(),
+      'Attachments': attachments.map((x) => x.toMap()).toList(),
+      'Equips': equips.map((x) => x.toMap()).toList(),
+      'Themes': themes.map((x) => x.toMap()).toList(),
+      'GameModes': gameModes.map((x) => x.toMap()).toList(),
+      'Sprays': sprays.map((x) => x.toMap()).toList(),
+      'SprayLevels': sprayLevels.map((x) => x.toMap()).toList(),
+      'Charms': charms.map((x) => x.toMap()).toList(),
+      'CharmLevels': charmLevels.map((x) => x.toMap()).toList(),
+      'PlayerCards': playerCards.map((x) => x.toMap()).toList(),
+      'PlayerTitles': playerTitles.map((x) => x.toMap()).toList(),
+      'StorefrontItems': storefrontItems.map((x) => x.toMap()).toList(),
+      'Seasons': seasons.map((x) => x.toMap()).toList(),
+      'Events': events.map((x) => x.toMap()).toList(),
     };
   }
 
