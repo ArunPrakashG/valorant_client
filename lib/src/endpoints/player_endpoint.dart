@@ -2,6 +2,7 @@ import '../constants.dart';
 import '../enums.dart';
 import '../models/balance.dart';
 import '../models/mmr.dart';
+import '../models/storefront.dart';
 import '../models/user.dart';
 import '../url_manager.dart';
 import '../valorant_client_base.dart';
@@ -41,6 +42,20 @@ class PlayerEndpoint {
   Future<MMR?> getMMR() async {
     final requestUri = Uri.parse('${UrlManager.getBaseUrlForRegion(_client.userRegion)}/mmr/v1/players/${_client.userPuuid}/competitiveupdates');
     final response = await _client.executeGenericRequest<MMR>(
+      method: HttpMethod.get,
+      uri: requestUri,
+    );
+
+    if (response == null) {
+      return null;
+    }
+
+    return response;
+  }
+
+  Future<dynamic> getStorefront() async {
+    final requestUri = Uri.parse('${UrlManager.getBaseUrlForRegion(_client.userRegion)}/store/v2/storefront/${_client.userPuuid}');
+    final response = await _client.executeGenericRequest<Storefront>(
       method: HttpMethod.get,
       uri: requestUri,
     );

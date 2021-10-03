@@ -56,7 +56,7 @@ class ValorantClient {
   /// Executes a raw request with authentication to the specified [Uri] with specified [HttpMethod] and with the specified body (if any)
   ///
   /// returns a [Map] of response data if the request is a success.
-  Future<Map<String, dynamic>?> executeRawRequest({required HttpMethod method, required Uri uri, dynamic body}) async {
+  Future<dynamic> executeRawRequest({required HttpMethod method, required Uri uri, dynamic body}) async {
     if (!_isInitialized) {
       callback.invokeErrorCallback('Client is not initialized yet. Try calling init()');
       return null;
