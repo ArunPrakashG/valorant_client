@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -30,6 +31,13 @@ class ValorantClient {
   Region get userRegion => _userDetails.region;
   bool get isInitialized => _isInitialized;
 
+  /// The validity period of this authenticated session.
+  ///
+  /// After [sessionValidityInHours] period, current authorized session will be invalid and you will need to authorize with riot api again.
+  ///
+  /// If you have [handleSessionAutomatically] set to True, it will be handled automatically
+  int get sessionValidityInHours => _rsoHandler._accessTokenExpiryInHours;
+
   /// Gets the headers which helps to authorize a request to RIOT Valorant API.
   ///
   /// Use this to send custom requests with authorization.
@@ -50,12 +58,12 @@ class ValorantClient {
   /// Initializes the client by authorizing the user with the constructor supplied [UserDetails]
   ///
   /// Must be called on every instance of [ValorantClient] to send authorized requests from the instance.
-  Future<bool> init() async {
+  Future<bool> init(bool handleSessionAutomatically) async {
     if (_rsoHandler._isLoggedIn) {
       return true;
     }
 
-    if (!await _rsoHandler.initRSO()) {
+    if (!await _rsoHandler.authenticate(handleSessionAutomatically)) {
       callback.invokeErrorCallback('Authentication Failed.');
       return false;
     }

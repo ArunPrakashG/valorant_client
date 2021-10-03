@@ -23,7 +23,7 @@ extension IdCollectionExtension on IdCollection {
 }
 
 extension StringExtension on String {
-  Id parseAsRiotAssetId(List<Id> ids) => ids.singleWhere((element) => !isNullOrEmpty(element.id) && element.id! == this);
+  Id? parseAsRiotAssetId(List<Id> ids) => ids.isNotEmpty ? ids.singleWhere((element) => !isNullOrEmpty(element.id) && element.id! == this) : null;
 }
 
 extension UserExtension on User {

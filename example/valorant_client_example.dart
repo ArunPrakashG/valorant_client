@@ -23,7 +23,7 @@ void main() async {
     ),
   );
 
-  await client.init();
+  await client.init(true);
 
   print('Player PUUID => ${client.userPuuid}');
 

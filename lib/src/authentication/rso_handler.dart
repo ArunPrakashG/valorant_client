@@ -8,16 +8,28 @@ class RSOHandler {
   final Map<String, dynamic> _authHeaders = {};
   int _accessTokenExpiryInHours = 1;
   String _userPuuid = '';
+  Timer? _validityTimer;
 
   bool get _isLoggedIn => !isNullOrEmpty(_userPuuid);
 
   RSOHandler(this._client, this.userDetails);
 
-  Future<bool> initRSO() async {
+  Future<bool> authenticate(bool handleSessionAutomatically) async {
+    _countryCode = '';
+    _tokenType = '';
+    _authHeaders.clear();
+    _userPuuid = '';
+    _validityTimer?.cancel();
+
     if (await _fetchClientCountry() && await _fetchAccessToken() && await _fetchEntitlements() && await _fetchClientVersion() && await _fetchUserInfo()) {
       _authHeaders['X-Riot-ClientPlatform'] =
           'ew0KCSJwbGF0Zm9ybVR5cGUiOiAiUEMiLA0KCSJwbGF0Zm9ybU9TIjogIldpbmRvd3MiLA0KCSJwbGF0Zm9ybU9TVmVyc2lvbiI6ICIxMC4wLjE5MDQyLjEuMjU2LjY0Yml0IiwNCgkicGxhdGZvcm1DaGlwc2V0IjogIlVua25vd24iDQp9';
       _client.options.headers.addAll(_authHeaders);
+
+      if (handleSessionAutomatically) {
+        _validityTimer = Timer(Duration(hours: _accessTokenExpiryInHours), () async => authenticate(handleSessionAutomatically));
+      }
+
       return true;
     }
 

@@ -37,7 +37,7 @@ class Storefront extends ISerializable<Storefront> {
 class FeaturedBundle {
   FeaturedBundle({
     this.bundle,
-    this.bundleRemainingDurationInSeconds = -1,
+    this.bundleRemainingDurationInSeconds = 0,
   });
 
   final FeaturedTheme? bundle;
@@ -49,7 +49,7 @@ class FeaturedBundle {
 
   factory FeaturedBundle.fromMap(Map<String, dynamic> json) => FeaturedBundle(
         bundle: json["Bundle"] == null ? null : FeaturedTheme.fromMap(json["Bundle"]),
-        bundleRemainingDurationInSeconds: json["BundleRemainingDurationInSeconds"] ?? -1,
+        bundleRemainingDurationInSeconds: json["BundleRemainingDurationInSeconds"] ?? 0,
       );
 
   Map<String, dynamic> toMap() => {
@@ -93,16 +93,16 @@ class FeaturedTheme {
 class ItemElement {
   ItemElement({
     this.item,
-    this.basePrice = -1,
+    this.basePrice = 0.0,
     this.currencyId,
-    this.discountPercent = -1,
+    this.discountPercent = 0.0,
     this.isPromoItem = false,
   });
 
-  final ItemItem? item;
-  final int basePrice;
+  final Item? item;
+  final double basePrice;
   final String? currencyId;
-  final int discountPercent;
+  final double discountPercent;
   final bool isPromoItem;
 
   factory ItemElement.fromJson(String str) => ItemElement.fromMap(json.decode(str));
@@ -110,10 +110,18 @@ class ItemElement {
   String toJson() => json.encode(toMap());
 
   factory ItemElement.fromMap(Map<String, dynamic> json) => ItemElement(
-        item: json["Item"] == null ? null : ItemItem.fromMap(json["Item"]),
-        basePrice: json["BasePrice"] ?? -1,
+        item: json["Item"] == null ? null : Item.fromMap(json["Item"]),
+        basePrice: json["BasePrice"] != null
+            ? json["BasePrice"] is double
+                ? json["BasePrice"]
+                : (json["BasePrice"] as int).toDouble()
+            : 0.0,
         currencyId: json["CurrencyID"],
-        discountPercent: json["DiscountPercent"] ?? -1,
+        discountPercent: json["DiscountPercent"] != null
+            ? json["DiscountPercent"] is double
+                ? json["DiscountPercent"]
+                : (json["DiscountPercent"] as int).toDouble()
+            : 0.0,
         isPromoItem: json["IsPromoItem"] ?? false,
       );
 
@@ -126,25 +134,29 @@ class ItemElement {
       };
 }
 
-class ItemItem {
-  ItemItem({
+class Item {
+  Item({
     this.itemTypeId,
     this.itemId,
-    this.amount = -1,
+    this.amount = 0.0,
   });
 
   final String? itemTypeId;
   final String? itemId;
-  final int amount;
+  final double amount;
 
-  factory ItemItem.fromJson(String str) => ItemItem.fromMap(json.decode(str));
+  factory Item.fromJson(String str) => Item.fromMap(json.decode(str));
 
   String toJson() => json.encode(toMap());
 
-  factory ItemItem.fromMap(Map<String, dynamic> json) => ItemItem(
+  factory Item.fromMap(Map<String, dynamic> json) => Item(
         itemTypeId: json["ItemTypeID"],
         itemId: json["ItemID"],
-        amount: json["Amount"] ?? -1,
+        amount: json["Amount"] != null
+            ? json["Amount"] is double
+                ? json["Amount"]
+                : (json["Amount"] as int).toDouble()
+            : 0.0,
       );
 
   Map<String, dynamic> toMap() => {
@@ -157,7 +169,7 @@ class ItemItem {
 class SkinsPanelLayout {
   SkinsPanelLayout({
     this.singleItemOffers = const [],
-    this.singleItemOffersRemainingDurationInSeconds = -1,
+    this.singleItemOffersRemainingDurationInSeconds = 0,
   });
 
   final List<String> singleItemOffers;
