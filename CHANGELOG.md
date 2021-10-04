@@ -14,3 +14,13 @@
 ## 1.1.1
 
 - Documentation updated
+
+## 1.1.2
+
+- Endpoint renamed. Endpoint -> Interface
+  playerEndpoint is now called playerInterface
+- Implemented match interface. (Requires Testing)
+
+## 1.1.3
+
+- Documentation bug fix

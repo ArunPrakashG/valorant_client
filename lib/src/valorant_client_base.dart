@@ -5,13 +5,14 @@ import 'dart:io';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:valorant_client/src/interfaces/match.dart';
 
 import 'callback.dart';
-import 'endpoints/id_endpoint.dart';
-import 'endpoints/player_endpoint.dart';
 import 'enums.dart';
 import 'extensions.dart';
 import 'helpers.dart';
+import 'interfaces/asset.dart';
+import 'interfaces/player.dart';
 import 'models/serializable.dart';
 import 'url_manager.dart';
 import 'user_details.dart';
@@ -24,12 +25,21 @@ class ValorantClient {
   late RSOHandler _rsoHandler;
 
   final UserDetails _userDetails;
+
+  /// [Callback]'s are containers for functions which are called on an event such as on an error during a request process etc. They help to know what error occured and where it occured.
+  ///
+  /// To register a callback, simply pass [Callback] instance with required parameters to this instance constructor.
   final Callback callback;
 
   bool _isInitialized = false;
 
+  /// PUUID of the logged in User
   String get userPuuid => _rsoHandler._userPuuid;
+
+  /// Region of logged in User
   Region get userRegion => _userDetails.region;
+
+  /// Returns true only if this instance is authorized and completed its startup process
   bool get isInitialized => _isInitialized;
 
   /// The validity period of this authenticated session.
@@ -46,8 +56,33 @@ class ValorantClient {
   /// You will get Empty Map if [isInitialized] is false or authorization failed internally.
   Map<String, dynamic> get getAuthorizationHeaders => _rsoHandler._authHeaders;
 
-  late PlayerEndpoint playerEndpoint = PlayerEndpoint(this);
-  late IdEndpoint idEndpoint = IdEndpoint(this);
+  /// This interface wraps over all player specific requests.
+  ///
+  /// Endpoints are loaded lazily. That means, they are only initilized when they are referenced the first time of their usage.
+  ///
+  /// ie, If you never reference [assetInterface] in your project, it won't be loaded onto memory and as a matter of fact, memory will be saved.
+  late PlayerInterface playerInterface = PlayerInterface(this);
+
+  /// This interface wraps over all riot asset specific requests.
+  ///
+  /// Endpoints are loaded lazily. That means, they are only initilized when they are referenced the first time of their usage.
+  ///
+  /// ie, If you never reference [assetInterface] in your project, it won't be loaded onto memory and as a matter of fact, memory will be saved.
+  late AssetInterface assetInterface = AssetInterface(this);
+
+  /// This interface wraps over all match specific requests.
+  ///
+  /// Endpoints are loaded lazily. That means, they are only initilized when they are referenced the first time of their usage.
+  ///
+  /// ie, If you never reference [assetInterface] in your project, it won't be loaded onto memory and as a matter of fact, memory will be saved.
+  late MatchInterface matchInterface = MatchInterface(this);
+
+  /// Default constructor of [ValorantClient]
+  ///
+  /// [_userDetails] parameter must contain a valid Username and Password else login will fail.
+  ///
+  /// [callback] is optional. Pass a Callback instance to this for events on request error or internal error.
+  ///
 
   ValorantClient(this._userDetails, {this.callback = const Callback()}) {
     _client = Dio();

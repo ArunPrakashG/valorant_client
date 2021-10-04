@@ -57,7 +57,7 @@ _NOTE: This is an async function, it authorizes this client to valorant API's. w
 - Thats it! Now you can send api requests to Valorant API. To Get current authorized player, you can call:
 
 ```dart
-final currentPlayer = await client.playerEndpoint.getPlayer();
+final currentPlayer = await client.playerInterface.getPlayer();
 ```
 
 ## Features Implemented
@@ -76,6 +76,5 @@ final currentPlayer = await client.playerEndpoint.getPlayer();
 
 - Assets Endpoint
   - Get All Content Assets (Including their path, asset id etc)
-
 
 <a href="https://www.buymeacoffee.com/arunprakashg" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>

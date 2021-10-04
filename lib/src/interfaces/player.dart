@@ -7,10 +7,10 @@ import '../models/user.dart';
 import '../url_manager.dart';
 import '../valorant_client_base.dart';
 
-class PlayerEndpoint {
+class PlayerInterface {
   final ValorantClient _client;
 
-  PlayerEndpoint(this._client);
+  PlayerInterface(this._client);
 
   Future<User?> getPlayer() async {
     final requestUri = Uri.parse('${UrlManager.getBaseUrlForRegion(_client.userRegion)}/name-service/v2/players');

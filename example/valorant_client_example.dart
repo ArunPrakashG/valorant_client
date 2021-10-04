@@ -32,14 +32,14 @@ void main() async {
 
   await Future<void>.delayed(const Duration(seconds: 1));
 
-  final assets = await client.idEndpoint.getRiotContentIds();
+  final assets = await client.assetInterface.getAssets();
 
   if (assets == null) {
     print('error with assets request');
     return;
   }
 
-  final storefront = await client.playerEndpoint.getStorefront();
+  final storefront = await client.playerInterface.getStorefront();
 
   if (storefront != null && storefront.skinsPanelLayout != null) {
     for (var item in storefront.skinsPanelLayout!.singleItemOffers) {
