@@ -19,7 +19,7 @@
 
 ```dart
 dependencies:
-  valorant_client: ^1.1.0
+  valorant_client: ^1.1.3
 ```
 
 - Import the library to your project class in which you want to use the library.
