@@ -29,7 +29,7 @@ void main() async {
 
   //var balance = await client.playerEndpoint.getBalance();
   //print('${balance?.valorantPoints} valorant points');
-
+/*
   await Future<void>.delayed(const Duration(seconds: 1));
 
   final assets = await client.assetInterface.getAssets();
@@ -45,5 +45,5 @@ void main() async {
     for (var item in storefront.skinsPanelLayout!.singleItemOffers) {
       print('${item.parseAsRiotAssetId(assets.storefrontItems)}');
     }
-  }
+  }*/
 }

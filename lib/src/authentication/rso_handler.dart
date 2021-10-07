@@ -2,17 +2,19 @@ part of '../valorant_client_base.dart';
 
 class RSOHandler {
   final Dio _client;
-  final UserDetails userDetails;
+  final UserDetails _userDetails;
+  final bool _hasSavedSession;
+  final Map<String, dynamic> _authHeaders = {};
+
   String _countryCode = '';
   String _tokenType = '';
-  final Map<String, dynamic> _authHeaders = {};
   int _accessTokenExpiryInHours = 1;
   String _userPuuid = '';
   Timer? _validityTimer;
 
   bool get _isLoggedIn => !isNullOrEmpty(_userPuuid);
 
-  RSOHandler(this._client, this.userDetails);
+  RSOHandler(this._client, this._userDetails, this._hasSavedSession);
 
   Future<bool> authenticate(bool handleSessionAutomatically) async {
     _countryCode = '';
@@ -21,9 +23,12 @@ class RSOHandler {
     _userPuuid = '';
     _validityTimer?.cancel();
 
+    if (_hasSavedSession) {
+      // TODO: handle saved session
+    }
+
     if (await _fetchClientCountry() && await _fetchAccessToken() && await _fetchEntitlements() && await _fetchClientVersion() && await _fetchUserInfo()) {
-      _authHeaders['X-Riot-ClientPlatform'] =
-          'ew0KCSJwbGF0Zm9ybVR5cGUiOiAiUEMiLA0KCSJwbGF0Zm9ybU9TIjogIldpbmRvd3MiLA0KCSJwbGF0Zm9ybU9TVmVyc2lvbiI6ICIxMC4wLjE5MDQyLjEuMjU2LjY0Yml0IiwNCgkicGxhdGZvcm1DaGlwc2V0IjogIlVua25vd24iDQp9';
+      _authHeaders[ClientConstants.clientPlatformHeaderKey] = ClientConstants.clientPlatformHeaderValue;
       _client.options.headers.addAll(_authHeaders);
 
       if (handleSessionAutomatically) {
@@ -60,15 +65,15 @@ class RSOHandler {
   }
 
   Future<bool> _fetchAccessToken() async {
-    if (!userDetails.isValid) {
+    if (!_userDetails.isValid) {
       return false;
     }
 
     final payload = jsonEncode(
       {
         'type': 'auth',
-        'username': userDetails.userName,
-        'password': userDetails.password,
+        'username': _userDetails.userName,
+        'password': _userDetails.password,
       },
     );
 

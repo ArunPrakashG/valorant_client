@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:valorant_client/src/constants.dart';
 import 'package:valorant_client/src/interfaces/match.dart';
 
 import 'callback.dart';
@@ -20,7 +21,7 @@ import 'user_details.dart';
 part 'authentication/rso_handler.dart';
 
 class ValorantClient {
-  late Dio _client;
+  late final Dio _client = Dio();
   late CookieJar _cookieJar;
   late RSOHandler _rsoHandler;
 
@@ -83,12 +84,17 @@ class ValorantClient {
   ///
   /// [callback] is optional. Pass a Callback instance to this for events on request error or internal error.
   ///
+  ValorantClient(this._userDetails, {this.callback = const Callback()});
 
-  ValorantClient(this._userDetails, {this.callback = const Callback()}) {
-    _client = Dio();
-    _cookieJar = CookieJar();
-    _client.interceptors.add(CookieManager(_cookieJar));
-    _rsoHandler = RSOHandler(_client, _userDetails);
+  // TODO: Persist previous session cookies, use that cookies to authenticate again instead of using username and password.
+  Future<bool> _hasSavedSession(CookieJar jar) async {
+    final cookies = await jar.loadForRequest(Uri.parse('https://auth.riotgames.com/'));
+
+    for (var c in cookies) {
+      print(c.toString());
+    }
+
+    return false;
   }
 
   /// Initializes the client by authorizing the user with the constructor supplied [UserDetails]
@@ -98,6 +104,10 @@ class ValorantClient {
     if (_rsoHandler._isLoggedIn) {
       return true;
     }
+
+    _cookieJar = PersistCookieJar();
+    _client.interceptors.add(CookieManager(_cookieJar));
+    _rsoHandler = RSOHandler(_client, _userDetails, await _hasSavedSession(_cookieJar));
 
     if (!await _rsoHandler.authenticate(handleSessionAutomatically)) {
       callback.invokeErrorCallback('Authentication Failed.');
