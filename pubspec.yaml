@@ -15,6 +15,7 @@ dependencies:
   cookie_jar: ^3.0.1
   dio: ^4.0.0
   dio_cookie_manager: ^2.0.0
+  jwt_decoder: ^2.0.1
 
 assets:
   - "assets/test.json"

@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:valorant_client/src/constants.dart';
 import 'package:valorant_client/src/interfaces/match.dart';
 
@@ -23,9 +24,10 @@ part 'authentication/rso_handler.dart';
 class ValorantClient {
   late final Dio _client = Dio();
   late CookieJar _cookieJar;
-  late RSOHandler _rsoHandler;
+  late final RSOHandler _rsoHandler = RSOHandler(_client, _userDetails, shouldPersistSession);
 
   final UserDetails _userDetails;
+  final bool shouldPersistSession;
 
   /// [Callback]'s are containers for functions which are called on an event such as on an error during a request process etc. They help to know what error occured and where it occured.
   ///
@@ -57,6 +59,8 @@ class ValorantClient {
   /// You will get Empty Map if [isInitialized] is false or authorization failed internally.
   Map<String, dynamic> get getAuthorizationHeaders => _rsoHandler._authHeaders;
 
+  Map<String, dynamic> get decodedAccessTokenFields => _rsoHandler._decodedAccessToken;
+
   /// This interface wraps over all player specific requests.
   ///
   /// Endpoints are loaded lazily. That means, they are only initilized when they are referenced the first time of their usage.
@@ -84,18 +88,7 @@ class ValorantClient {
   ///
   /// [callback] is optional. Pass a Callback instance to this for events on request error or internal error.
   ///
-  ValorantClient(this._userDetails, {this.callback = const Callback()});
-
-  // TODO: Persist previous session cookies, use that cookies to authenticate again instead of using username and password.
-  Future<bool> _hasSavedSession(CookieJar jar) async {
-    final cookies = await jar.loadForRequest(Uri.parse('https://auth.riotgames.com/'));
-
-    for (var c in cookies) {
-      print(c.toString());
-    }
-
-    return false;
-  }
+  ValorantClient(this._userDetails, {this.callback = const Callback(), this.shouldPersistSession = false});
 
   /// Initializes the client by authorizing the user with the constructor supplied [UserDetails]
   ///
@@ -105,9 +98,8 @@ class ValorantClient {
       return true;
     }
 
-    _cookieJar = PersistCookieJar();
+    _cookieJar = shouldPersistSession ? PersistCookieJar() : CookieJar();
     _client.interceptors.add(CookieManager(_cookieJar));
-    _rsoHandler = RSOHandler(_client, _userDetails, await _hasSavedSession(_cookieJar));
 
     if (!await _rsoHandler.authenticate(handleSessionAutomatically)) {
       callback.invokeErrorCallback('Authentication Failed.');

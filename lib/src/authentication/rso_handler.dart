@@ -3,18 +3,19 @@ part of '../valorant_client_base.dart';
 class RSOHandler {
   final Dio _client;
   final UserDetails _userDetails;
-  final bool _hasSavedSession;
   final Map<String, dynamic> _authHeaders = {};
+  final bool shouldPersistSession;
 
   String _countryCode = '';
   String _tokenType = '';
   int _accessTokenExpiryInHours = 1;
   String _userPuuid = '';
   Timer? _validityTimer;
+  Map<String, dynamic> _decodedAccessToken = {};
 
   bool get _isLoggedIn => !isNullOrEmpty(_userPuuid);
 
-  RSOHandler(this._client, this._userDetails, this._hasSavedSession);
+  RSOHandler(this._client, this._userDetails, this.shouldPersistSession);
 
   Future<bool> authenticate(bool handleSessionAutomatically) async {
     _countryCode = '';
@@ -22,10 +23,6 @@ class RSOHandler {
     _authHeaders.clear();
     _userPuuid = '';
     _validityTimer?.cancel();
-
-    if (_hasSavedSession) {
-      // TODO: handle saved session
-    }
 
     if (await _fetchClientCountry() && await _fetchAccessToken() && await _fetchEntitlements() && await _fetchClientVersion() && await _fetchUserInfo()) {
       _authHeaders[ClientConstants.clientPlatformHeaderKey] = ClientConstants.clientPlatformHeaderValue;
@@ -36,6 +33,21 @@ class RSOHandler {
       }
 
       return true;
+    }
+
+    return false;
+  }
+
+  // TODO: Persist previous session cookies, use that cookies to authenticate again instead of using username and password.
+  Future<bool> _hasSavedSession(CookieJar jar) async {
+    if (!shouldPersistSession) {
+      return false;
+    }
+
+    final cookies = await jar.loadForRequest(Uri.parse('https://auth.riotgames.com/'));
+
+    for (var c in cookies) {
+      print(c.toString());
     }
 
     return false;
@@ -99,6 +111,7 @@ class RSOHandler {
 
     _accessTokenExpiryInHours = (int.tryParse(parsedUri.queryParameters['expires_in'] ?? '1') ?? 1) ~/ 3600;
     _tokenType = parsedUri.queryParameters['token_type'] as String;
+    _decodedAccessToken = _decodeAccessToken(parsedUri.queryParameters['access_token'] as String);
     _authHeaders[HttpHeaders.authorizationHeader] = '$_tokenType ${parsedUri.queryParameters['access_token'] as String}';
     return parsedUri.queryParameters['access_token'] != null;
   }
@@ -142,5 +155,13 @@ class RSOHandler {
 
     _authHeaders['X-Riot-ClientVersion'] = response.data['data']['riotClientVersion'] as String;
     return response.data['data']['riotClientVersion'] != null;
+  }
+
+  Map<String, dynamic> _decodeAccessToken(String token) {
+    try {
+      return JwtDecoder.decode(token);
+    } catch (e) {
+      return {};
+    }
   }
 }

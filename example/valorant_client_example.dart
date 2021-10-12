@@ -6,13 +6,17 @@ import 'package:valorant_client/src/callback.dart';
 import 'package:valorant_client/src/enums.dart';
 import 'package:valorant_client/src/user_details.dart';
 import 'package:valorant_client/valorant_client.dart';
-import 'package:valorant_client/src/extensions.dart';
 
 void main() async {
   var json = jsonDecode(await File('assets/test.json').readAsString());
 
   ValorantClient client = ValorantClient(
-    UserDetails(userName: json['username'], password: json['password'], region: Region.ap),
+    UserDetails(
+      userName: json['username'],
+      password: json['password'],
+      region: Region.ap,
+    ),
+    shouldPersistSession: false,
     callback: Callback(
       onError: (String error) {
         print(error);
@@ -26,6 +30,10 @@ void main() async {
   await client.init(true);
 
   print('Player PUUID => ${client.userPuuid}');
+
+  for (var item in client.decodedAccessTokenFields.entries) {
+    print('${item.key} -> ${item.value}');
+  }
 
   //var balance = await client.playerEndpoint.getBalance();
   //print('${balance?.valorantPoints} valorant points');
