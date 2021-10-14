@@ -157,9 +157,10 @@ class RSOHandler {
     return response.data['data']['riotClientVersion'] != null;
   }
 
+  @Deprecated('Removed to not use another library.')
   Map<String, dynamic> _decodeAccessToken(String token) {
     try {
-      return JwtDecoder.decode(token);
+      return {}; //JwtDecoder.decode(token);
     } catch (e) {
       return {};
     }
