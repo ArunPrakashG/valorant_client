@@ -2,9 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:valorant_client/src/callback.dart';
-import 'package:valorant_client/src/enums.dart';
-import 'package:valorant_client/src/user_details.dart';
 import 'package:valorant_client/valorant_client.dart';
 
 void main() async {
@@ -14,7 +11,7 @@ void main() async {
     UserDetails(
       userName: json['username'],
       password: json['password'],
-      region: Region.ap,
+      region: Region.eu, // Available regions: na, eu, ap, ko
     ),
     shouldPersistSession: false,
     callback: Callback(
@@ -31,12 +28,14 @@ void main() async {
 
   print('Player PUUID => ${client.userPuuid}');
 
-  for (var item in client.decodedAccessTokenFields.entries) {
-    print('${item.key} -> ${item.value}');
-  }
+  // TODO: To implement \lib\src\authentication\rso_handler.dart
+  // for (var item in client.decodedAccessTokenFields.entries) {
+  //  print('${item.key} -> ${item.value}');
+  // }
 
-  //var balance = await client.playerEndpoint.getBalance();
-  //print('${balance?.valorantPoints} valorant points');
+  var balance = await client.playerInterface.getBalance();
+  print('${balance?.valorantPoints} valorant points');
+  print('${balance?.radianitePoints} radianite points');
 /*
   await Future<void>.delayed(const Duration(seconds: 1));
 
