@@ -2,6 +2,7 @@ import '../constants.dart';
 import '../enums.dart';
 import '../models/balance.dart';
 import '../models/mmr.dart';
+import '../models/offers.dart';
 import '../models/storefront.dart';
 import '../models/user.dart';
 import '../url_manager.dart';
@@ -65,6 +66,17 @@ class PlayerInterface {
 
     return await _client.executeGenericRequest<Storefront>(
       typeResolver: Storefront(),
+      method: HttpMethod.get,
+      uri: requestUri,
+    );
+  }
+
+  Future<Offers?> getStoreOffers() async {
+    final requestUri = Uri.parse(
+        '${UrlManager.getBaseUrlForRegion(_client.userRegion)}/store/v1/offers/');
+
+    return await _client.executeGenericRequest<Offers>(
+      typeResolver: Offers(),
       method: HttpMethod.get,
       uri: requestUri,
     );
