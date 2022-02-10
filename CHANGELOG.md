@@ -24,3 +24,8 @@
 ## 1.1.3
 
 - Documentation bug fix
+
+## 1.1.4
+
+- Implemented getStoreOffers(...) method.
+  Thanks NichyX https://github.com/NichyX
