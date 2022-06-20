@@ -1,6 +1,6 @@
 part of '../valorant_client_base.dart';
 
-class RSOHandler {
+class AuthorizationHandler {
   final Dio _client;
   final UserDetails _userDetails;
   final Map<String, dynamic> _authHeaders = {};
@@ -15,7 +15,8 @@ class RSOHandler {
 
   bool get _isLoggedIn => !isNullOrEmpty(_userPuuid);
 
-  RSOHandler(this._client, this._userDetails, this.shouldPersistSession);
+  AuthorizationHandler(
+      this._client, this._userDetails, this.shouldPersistSession);
 
   Future<bool> authenticate(bool handleSessionAutomatically) async {
     _countryCode = '';
@@ -24,12 +25,18 @@ class RSOHandler {
     _userPuuid = '';
     _validityTimer?.cancel();
 
-    if (await _fetchClientCountry() && await _fetchAccessToken() && await _fetchEntitlements() && await _fetchClientVersion() && await _fetchUserInfo()) {
-      _authHeaders[ClientConstants.clientPlatformHeaderKey] = ClientConstants.clientPlatformHeaderValue;
+    if (await _fetchClientCountry() &&
+        await _fetchAccessToken() &&
+        await _fetchEntitlements() &&
+        await _fetchClientVersion() &&
+        await _fetchUserInfo()) {
+      _authHeaders[ClientConstants.clientPlatformHeaderKey] =
+          ClientConstants.clientPlatformHeaderValue;
       _client.options.headers.addAll(_authHeaders);
 
       if (handleSessionAutomatically) {
-        _validityTimer = Timer(Duration(hours: _accessTokenExpiryInHours), () async => authenticate(handleSessionAutomatically));
+        _validityTimer = Timer(Duration(hours: _accessTokenExpiryInHours),
+            () async => authenticate(handleSessionAutomatically));
       }
 
       return true;
@@ -44,7 +51,8 @@ class RSOHandler {
       return false;
     }
 
-    final cookies = await jar.loadForRequest(Uri.parse('https://auth.riotgames.com/'));
+    final cookies =
+        await jar.loadForRequest(Uri.parse('https://auth.riotgames.com/'));
 
     for (var c in cookies) {
       print(c.toString());
@@ -98,21 +106,27 @@ class RSOHandler {
       return false;
     }
 
-    if (response.data['error'] != null && response.data['error'] == 'auth_failure') {
+    if (response.data['error'] != null &&
+        response.data['error'] == 'auth_failure') {
       return false;
     }
 
-    final authUrl = (response.data['response']?['parameters']?['uri'] ?? '') as String;
+    final authUrl =
+        (response.data['response']?['parameters']?['uri'] ?? '') as String;
     final parsedUri = Uri.tryParse(authUrl.replaceFirst('#', '?'));
 
     if (parsedUri == null || !parsedUri.hasQuery) {
       return false;
     }
 
-    _accessTokenExpiryInHours = (int.tryParse(parsedUri.queryParameters['expires_in'] ?? '1') ?? 1) ~/ 3600;
+    _accessTokenExpiryInHours =
+        (int.tryParse(parsedUri.queryParameters['expires_in'] ?? '1') ?? 1) ~/
+            3600;
     _tokenType = parsedUri.queryParameters['token_type'] as String;
-    _decodedAccessToken = _decodeAccessToken(parsedUri.queryParameters['access_token'] as String);
-    _authHeaders[HttpHeaders.authorizationHeader] = '$_tokenType ${parsedUri.queryParameters['access_token'] as String}';
+    _decodedAccessToken =
+        _decodeAccessToken(parsedUri.queryParameters['access_token'] as String);
+    _authHeaders[HttpHeaders.authorizationHeader] =
+        '$_tokenType ${parsedUri.queryParameters['access_token'] as String}';
     return parsedUri.queryParameters['access_token'] != null;
   }
 
@@ -127,7 +141,8 @@ class RSOHandler {
       return false;
     }
 
-    _authHeaders['X-Riot-Entitlements-JWT'] = response.data['entitlements_token'] as String;
+    _authHeaders['X-Riot-Entitlements-JWT'] =
+        response.data['entitlements_token'] as String;
     return response.data['entitlements_token'] != null;
   }
 
@@ -153,7 +168,8 @@ class RSOHandler {
       return false;
     }
 
-    _authHeaders['X-Riot-ClientVersion'] = response.data['data']['riotClientVersion'] as String;
+    _authHeaders['X-Riot-ClientVersion'] =
+        response.data['data']['riotClientVersion'] as String;
     return response.data['data']['riotClientVersion'] != null;
   }
 

@@ -23,7 +23,8 @@ part 'authentication/rso_handler.dart';
 class ValorantClient {
   late final Dio _client = Dio();
   late CookieJar _cookieJar;
-  late final RSOHandler _rsoHandler = RSOHandler(_client, _userDetails, shouldPersistSession);
+  late final AuthorizationHandler _rsoHandler =
+      AuthorizationHandler(_client, _userDetails, shouldPersistSession);
 
   final UserDetails _userDetails;
   final bool shouldPersistSession;
@@ -58,7 +59,8 @@ class ValorantClient {
   /// You will get Empty Map if [isInitialized] is false or authorization failed internally.
   Map<String, dynamic> get getAuthorizationHeaders => _rsoHandler._authHeaders;
 
-  Map<String, dynamic> get decodedAccessTokenFields => _rsoHandler._decodedAccessToken;
+  Map<String, dynamic> get decodedAccessTokenFields =>
+      _rsoHandler._decodedAccessToken;
 
   /// This interface wraps over all player specific requests.
   ///
@@ -87,7 +89,8 @@ class ValorantClient {
   ///
   /// [callback] is optional. Pass a Callback instance to this for events on request error or internal error.
   ///
-  ValorantClient(this._userDetails, {this.callback = const Callback(), this.shouldPersistSession = false});
+  ValorantClient(this._userDetails,
+      {this.callback = const Callback(), this.shouldPersistSession = false});
 
   /// Initializes the client by authorizing the user with the constructor supplied [UserDetails]
   ///
@@ -111,9 +114,11 @@ class ValorantClient {
   /// Executes a raw request with authentication to the specified [Uri] with specified [HttpMethod] and with the specified body (if any)
   ///
   /// returns a [Map] of response data if the request is a success.
-  Future<dynamic> executeRawRequest({required HttpMethod method, required Uri uri, dynamic body}) async {
+  Future<dynamic> executeRawRequest(
+      {required HttpMethod method, required Uri uri, dynamic body}) async {
     if (!_isInitialized) {
-      callback.invokeErrorCallback('Client is not initialized yet. Try calling init()');
+      callback.invokeErrorCallback(
+          'Client is not initialized yet. Try calling init()');
       return null;
     }
 
@@ -145,7 +150,9 @@ class ValorantClient {
         return null;
       }
 
-      return response.data is String ? jsonDecode(response.data) : response.data;
+      return response.data is String
+          ? jsonDecode(response.data)
+          : response.data;
     } on DioError catch (e) {
       callback.invokeRequestErrorCallback(e);
       return null;
@@ -155,9 +162,14 @@ class ValorantClient {
   /// Executes a generic request with authentication to the specified [Uri] with specified [HttpMethod] and with the specified body (if any)
   ///
   /// returns response data as [T] type which is specified as a generic type parameter to the function.
-  Future<T?> executeGenericRequest<T extends ISerializable<T>>({required T typeResolver, required HttpMethod method, required Uri uri, dynamic body}) async {
+  Future<T?> executeGenericRequest<T extends ISerializable<T>>(
+      {required T typeResolver,
+      required HttpMethod method,
+      required Uri uri,
+      dynamic body}) async {
     if (!_isInitialized) {
-      callback.invokeErrorCallback('Client is not initialized yet. Try calling init()');
+      callback.invokeErrorCallback(
+          'Client is not initialized yet. Try calling init()');
       return null;
     }
 
@@ -189,7 +201,8 @@ class ValorantClient {
         return null;
       }
 
-      return typeResolver.fromJson(response.data is String ? jsonDecode(response.data) : response.data);
+      return typeResolver.fromJson(
+          response.data is String ? jsonDecode(response.data) : response.data);
     } on DioError catch (e) {
       callback.invokeRequestErrorCallback(e);
       return null;
