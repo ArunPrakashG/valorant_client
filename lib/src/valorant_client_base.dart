@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:cookie_jar/cookie_jar.dart';
@@ -18,15 +19,19 @@ import 'models/serializable.dart';
 import 'url_manager.dart';
 import 'user_details.dart';
 
-part 'authentication/rso_handler.dart';
+part 'authentication/authorization_handler.dart';
 
 class ValorantClient {
   late final Dio _client = Dio();
   late CookieJar _cookieJar;
-  late final RSOHandler _rsoHandler = RSOHandler(_client, _userDetails, shouldPersistSession);
+  late final AuthorizationHandler _rsoHandler = AuthorizationHandler(
+    _client,
+    _userDetails,
+    persistSession,
+    authCodeCallback,
+  );
 
   final UserDetails _userDetails;
-  final bool shouldPersistSession;
 
   /// [Callback]'s are containers for functions which are called on an event such as on an error during a request process etc. They help to know what error occured and where it occured.
   ///
@@ -34,6 +39,12 @@ class ValorantClient {
   final Callback callback;
 
   bool _isInitialized = false;
+
+  /// Stores the cookies locally for reauthentication
+  final bool persistSession;
+
+  /// Uses Dio's log interceptor which prints all requests and responses to the console.
+  final bool enableDebugLog;
 
   /// PUUID of the logged in User
   String get userPuuid => _rsoHandler._userPuuid;
@@ -56,9 +67,9 @@ class ValorantClient {
   /// Use this to send custom requests with authorization.
   ///
   /// You will get Empty Map if [isInitialized] is false or authorization failed internally.
-  Map<String, dynamic> get getAuthorizationHeaders => _rsoHandler._authHeaders;
-
-  Map<String, dynamic> get decodedAccessTokenFields => _rsoHandler._decodedAccessToken;
+  Map<String, dynamic> get getAuthorizationHeaders {
+    return _rsoHandler._authHeaders;
+  }
 
   /// This interface wraps over all player specific requests.
   ///
@@ -81,26 +92,38 @@ class ValorantClient {
   /// ie, If you never reference [assetInterface] in your project, it won't be loaded onto memory and as a matter of fact, memory will be saved.
   late MatchInterface matchInterface = MatchInterface(this);
 
+  final Future<String?> Function()? authCodeCallback;
+
   /// Default constructor of [ValorantClient]
   ///
   /// [_userDetails] parameter must contain a valid Username and Password else login will fail.
   ///
   /// [callback] is optional. Pass a Callback instance to this for events on request error or internal error.
   ///
-  ValorantClient(this._userDetails, {this.callback = const Callback(), this.shouldPersistSession = false});
+  ValorantClient(
+    this._userDetails, {
+    this.callback = const Callback(),
+    this.enableDebugLog = false,
+    this.persistSession = false,
+    this.authCodeCallback,
+  });
 
   /// Initializes the client by authorizing the user with the constructor supplied [UserDetails]
   ///
   /// Must be called on every instance of [ValorantClient] to send authorized requests from the instance.
-  Future<bool> init(bool handleSessionAutomatically) async {
+  Future<bool> init() async {
     if (_rsoHandler._isLoggedIn) {
       return true;
     }
 
-    _cookieJar = shouldPersistSession ? PersistCookieJar() : CookieJar();
+    _cookieJar = persistSession ? PersistCookieJar() : CookieJar();
     _client.interceptors.add(CookieManager(_cookieJar));
 
-    if (!await _rsoHandler.authenticate(handleSessionAutomatically)) {
+    if (enableDebugLog) {
+      _client.interceptors.add(LogInterceptor(responseBody: true));
+    }
+
+    if (!await _rsoHandler.authenticate(persistSession)) {
       callback.invokeErrorCallback('Authentication Failed.');
       return false;
     }
@@ -111,41 +134,39 @@ class ValorantClient {
   /// Executes a raw request with authentication to the specified [Uri] with specified [HttpMethod] and with the specified body (if any)
   ///
   /// returns a [Map] of response data if the request is a success.
-  Future<dynamic> executeRawRequest({required HttpMethod method, required Uri uri, dynamic body}) async {
-    if (!_isInitialized) {
-      callback.invokeErrorCallback('Client is not initialized yet. Try calling init()');
+  Future<dynamic> executeRawRequest({
+    required HttpMethod method,
+    required Uri uri,
+    dynamic body,
+    bool skipInit = false,
+  }) async {
+    if (!skipInit && !_isInitialized) {
+      callback.invokeErrorCallback(
+        'Client is not initialized yet. Try calling init()',
+      );
       return null;
     }
 
     try {
-      Response<dynamic> response;
-
-      if (body == null) {
-        response = await _client.requestUri(
-          uri,
-          options: Options(
-            contentType: ContentType.json.value,
-            responseType: ResponseType.json,
-            method: method.humanized.toUpperCase(),
-          ),
-        );
-      } else {
-        response = await _client.requestUri(
-          uri,
-          data: body,
-          options: Options(
-            contentType: ContentType.json.value,
-            responseType: ResponseType.json,
-            method: method.humanized.toUpperCase(),
-          ),
-        );
-      }
+      final response = await _client.requestUri(
+        uri,
+        data: body,
+        options: Options(
+          contentType: ContentType.json.value,
+          responseType: ResponseType.json,
+          method: method.humanized.toUpperCase(),
+        ),
+      );
 
       if (response.statusCode != 200) {
         return null;
       }
 
-      return response.data is String ? jsonDecode(response.data) : response.data;
+      if (response.data is String) {
+        return json.decode(response.data);
+      }
+
+      return response.data;
     } on DioError catch (e) {
       callback.invokeRequestErrorCallback(e);
       return null;
@@ -155,41 +176,42 @@ class ValorantClient {
   /// Executes a generic request with authentication to the specified [Uri] with specified [HttpMethod] and with the specified body (if any)
   ///
   /// returns response data as [T] type which is specified as a generic type parameter to the function.
-  Future<T?> executeGenericRequest<T extends ISerializable<T>>({required T typeResolver, required HttpMethod method, required Uri uri, dynamic body}) async {
-    if (!_isInitialized) {
-      callback.invokeErrorCallback('Client is not initialized yet. Try calling init()');
+  Future<T?> executeGenericRequest<T extends ISerializable<T>>({
+    required T Function() typeResolver,
+    required HttpMethod method,
+    required Uri uri,
+    dynamic body,
+    bool skipInit = false,
+  }) async {
+    if (!skipInit && !_isInitialized) {
+      callback.invokeErrorCallback(
+        'Client is not initialized yet. Try calling init()',
+      );
       return null;
     }
 
     try {
-      Response<dynamic> response;
-
-      if (body == null) {
-        response = await _client.requestUri(
-          uri,
-          options: Options(
-            contentType: ContentType.json.value,
-            responseType: ResponseType.json,
-            method: method.humanized.toUpperCase(),
-          ),
-        );
-      } else {
-        response = await _client.requestUri(
-          uri,
-          data: body,
-          options: Options(
-            contentType: ContentType.json.value,
-            responseType: ResponseType.json,
-            method: method.humanized.toUpperCase(),
-          ),
-        );
-      }
+      final response = await _client.requestUri(
+        uri,
+        data: body,
+        options: Options(
+          contentType: ContentType.json.value,
+          responseType: ResponseType.json,
+          method: method.humanized.toUpperCase(),
+        ),
+      );
 
       if (response.statusCode != 200) {
         return null;
       }
 
-      return typeResolver.fromJson(response.data is String ? jsonDecode(response.data) : response.data);
+      dynamic data = response.data;
+
+      if (response.data is String) {
+        data = json.decode(response.data);
+      }
+
+      return typeResolver().fromJson(data);
     } on DioError catch (e) {
       callback.invokeRequestErrorCallback(e);
       return null;
