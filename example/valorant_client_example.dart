@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:valorant_client/valorant_client.dart';
 
 void main() async {
+  await Future<void>.delayed(const Duration(seconds: 1));
   var json = jsonDecode(await File('assets/test.json').readAsString());
 
   ValorantClient client = ValorantClient(
@@ -13,7 +14,8 @@ void main() async {
       password: json['password'],
       region: Region.eu, // Available regions: na, eu, ap, ko
     ),
-    shouldPersistSession: false,
+    persistSession: false,
+    enableDebugLog: true,
     callback: Callback(
       onError: (String error) {
         print(error);
@@ -22,9 +24,13 @@ void main() async {
         print(error.message);
       },
     ),
+    authCodeCallback: () async {
+      print('Please enter the auth code:');
+      return null;
+    },
   );
 
-  await client.init(true);
+  await client.init();
 
   print('Player PUUID => ${client.userPuuid}');
 

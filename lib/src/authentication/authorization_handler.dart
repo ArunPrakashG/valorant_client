@@ -4,19 +4,25 @@ class AuthorizationHandler {
   final Dio _client;
   final UserDetails _userDetails;
   final Map<String, dynamic> _authHeaders = {};
-  final bool shouldPersistSession;
+  final bool _persistSession;
 
   String _countryCode = '';
   String _tokenType = '';
   int _accessTokenExpiryInHours = 1;
   String _userPuuid = '';
   Timer? _validityTimer;
-  Map<String, dynamic> _decodedAccessToken = {};
+  bool _has2FA = false;
+
+  final Future<String?> Function()? _getAccessTokenCallback;
 
   bool get _isLoggedIn => !isNullOrEmpty(_userPuuid);
 
   AuthorizationHandler(
-      this._client, this._userDetails, this.shouldPersistSession);
+    this._client,
+    this._userDetails,
+    this._persistSession,
+    this._getAccessTokenCallback,
+  );
 
   Future<bool> authenticate(bool handleSessionAutomatically) async {
     _countryCode = '';
@@ -25,29 +31,70 @@ class AuthorizationHandler {
     _userPuuid = '';
     _validityTimer?.cancel();
 
-    if (await _fetchClientCountry() &&
-        await _fetchAccessToken() &&
-        await _fetchEntitlements() &&
-        await _fetchClientVersion() &&
-        await _fetchUserInfo()) {
-      _authHeaders[ClientConstants.clientPlatformHeaderKey] =
-          ClientConstants.clientPlatformHeaderValue;
-      _client.options.headers.addAll(_authHeaders);
+    final clientCountryResult = await _fetchClientCountry();
+    log('clientCountryResult: $clientCountryResult');
 
-      if (handleSessionAutomatically) {
-        _validityTimer = Timer(Duration(hours: _accessTokenExpiryInHours),
-            () async => authenticate(handleSessionAutomatically));
-      }
-
-      return true;
+    if (!clientCountryResult) {
+      return false;
     }
 
-    return false;
+    final accessTokenResult = await _fetchAccessToken();
+    log('accessTokenResult: $accessTokenResult');
+
+    if (!accessTokenResult) {
+      return false;
+    }
+
+    final entitlementsResult = await _fetchEntitlements();
+    log('entitlementsResult: $entitlementsResult');
+
+    if (!entitlementsResult) {
+      return false;
+    }
+
+    final clientVersionResult = await _fetchClientVersion();
+    log('clientVersionResult: $clientVersionResult');
+
+    if (!clientVersionResult) {
+      return false;
+    }
+
+    final userInfoResult = await _fetchUserInfo();
+    log('userInfoResult: $userInfoResult');
+
+    if (!userInfoResult) {
+      return false;
+    }
+
+    final isSuccess = clientCountryResult &&
+        accessTokenResult &&
+        entitlementsResult &&
+        clientVersionResult &&
+        userInfoResult;
+
+    if (!isSuccess) {
+      return false;
+    }
+
+    _authHeaders[ClientConstants.clientPlatformHeaderKey] =
+        ClientConstants.clientPlatformHeaderValue;
+    _client.options.headers.addAll(_authHeaders);
+
+    if (handleSessionAutomatically) {
+      _validityTimer = Timer(
+        Duration(hours: _accessTokenExpiryInHours),
+        () async => authenticate(
+          handleSessionAutomatically,
+        ),
+      );
+    }
+
+    return true;
   }
 
   // TODO: Persist previous session cookies, use that cookies to authenticate again instead of using username and password.
   Future<bool> _hasSavedSession(CookieJar jar) async {
-    if (!shouldPersistSession) {
+    if (!_persistSession) {
       return false;
     }
 
@@ -80,20 +127,32 @@ class AuthorizationHandler {
       return false;
     }
 
-    _countryCode = response.data['country'] ?? '';
-    return _countryCode.isNotEmpty;
+    final code = response.data?['country'] as String?;
+
+    if (code == null) {
+      return false;
+    }
+
+    _countryCode = code;
+
+    return true;
   }
 
-  Future<bool> _fetchAccessToken() async {
+  Future<bool> _fetchAccessToken({
+    String? authCode,
+    bool is2Fa = false,
+  }) async {
     if (!_userDetails.isValid) {
       return false;
     }
 
     final payload = jsonEncode(
       {
-        'type': 'auth',
-        'username': _userDetails.userName,
-        'password': _userDetails.password,
+        'type': is2Fa ? 'multifactor' : 'auth',
+        if (is2Fa) 'code': authCode,
+        if (!is2Fa) 'username': _userDetails.userName,
+        if (!is2Fa) 'password': _userDetails.password,
+        'rememberDevice': true,
       },
     );
 
@@ -111,6 +170,18 @@ class AuthorizationHandler {
       return false;
     }
 
+    _has2FA = !is2Fa && response.data?['type'] == 'multifactor';
+
+    if (_has2FA) {
+      if (_getAccessTokenCallback == null) {
+        return false;
+      }
+
+      String? authCode = await _getAccessTokenCallback!();
+
+      return await _fetchAccessToken(authCode: authCode, is2Fa: _has2FA);
+    }
+
     final authUrl =
         (response.data['response']?['parameters']?['uri'] ?? '') as String;
     final parsedUri = Uri.tryParse(authUrl.replaceFirst('#', '?'));
@@ -123,8 +194,7 @@ class AuthorizationHandler {
         (int.tryParse(parsedUri.queryParameters['expires_in'] ?? '1') ?? 1) ~/
             3600;
     _tokenType = parsedUri.queryParameters['token_type'] as String;
-    _decodedAccessToken =
-        _decodeAccessToken(parsedUri.queryParameters['access_token'] as String);
+
     _authHeaders[HttpHeaders.authorizationHeader] =
         '$_tokenType ${parsedUri.queryParameters['access_token'] as String}';
     return parsedUri.queryParameters['access_token'] != null;
@@ -171,14 +241,5 @@ class AuthorizationHandler {
     _authHeaders['X-Riot-ClientVersion'] =
         response.data['data']['riotClientVersion'] as String;
     return response.data['data']['riotClientVersion'] != null;
-  }
-
-  @Deprecated('Removed to not use another library.')
-  Map<String, dynamic> _decodeAccessToken(String token) {
-    try {
-      return {}; //JwtDecoder.decode(token);
-    } catch (e) {
-      return {};
-    }
   }
 }
